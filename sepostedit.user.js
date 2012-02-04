@@ -35,3 +35,32 @@ function EmbedFunctionOnPageAndExecute(function_contents)
 {
     EmbedCodeOnPage("(" + function_contents.toString() + ")()");
 }
+
+// This function executes the provided callback when the dependent
+// script has finished loading.
+EmbedFunctionOnPage('LoadDependentScript', function(script_filename, callback) {
+    
+    var script    = document.createElement('script');
+    script.type   = 'text/javascript';
+    script.src    = script_filename;
+    script.onload = callback;
+    document.getElementsByTagName('head')[0].appendChild(script);
+    
+});
+
+// This code will be executed immediately upon insertion into the page DOM
+EmbedFunctionOnPageAndExecute(function() {
+    
+    // Load liveQuery so that we can modify the editor even for
+    // inline edits.
+    // Load livequery
+    LoadDependentScript('http://files.quickmediasolutions.com/js/jquery.livequery.js', function() {
+        
+        // Now whenever an editor is created, we manipulate it
+        $('.wmd-button-row').livequery(function() {
+            
+            // Do something with the editor: '$(this)'
+            
+        });
+    });
+});

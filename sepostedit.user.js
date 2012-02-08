@@ -71,6 +71,49 @@ EmbedFunctionOnPage('AddToolbarButton', function(toolbar, icon, tooltip, callbac
     
 });
 
+// Corrects common misspellings (this includes improperly capitalized words too)
+EmbedFunctionOnPage('CorrectCommonMisspellings', function(original_text) {
+    
+    var text = original_text;
+    
+    var replacements = { 'dont':   'don\'t',
+                         'i':      'I',
+                         'teh':    'the',
+                         'ubunut': 'ubuntu',
+    };
+    
+    for(var wrong_word in replacements)
+        text = text.replace(new RegExp(wrong_word, 'gi'), replacements[wrong_word]);
+    
+    return text;
+    
+});
+
+// Corrects the title of the question
+EmbedFunctionOnPage('CorrectTitle', function(original_title) {
+    
+    // First correct any misspellings
+    var title = CorrectCommonMisspellings(original_title);
+    
+    // Anytime more than two letters are capitalized, switch them to lowercase
+    title = title.replace(/([A-Z]{2,})/g, function(i) { return i.toLowerCase() });
+    
+    // If there is no punctuation on the end of the 
+    
+    return title;
+    
+});
+
+// Corrects the body of the post
+EmbedFunctionOnPage('CorrectBody', function(original_body) {
+    
+    // Correct any misspellings
+    var body = CorrectCommonMisspellings(original_body);
+    
+    return body;
+    
+});
+
 // This code will be executed immediately upon insertion into the page DOM
 EmbedFunctionOnPageAndExecute(function() {
     
@@ -80,13 +123,31 @@ EmbedFunctionOnPageAndExecute(function() {
         // Now whenever an editor is created, we manipulate it
         $('.wmd-button-row').livequery(function() {
             
-            // Begin by appending the editor button to the toolbar
-            AddToolbarButton($(this), 'http://i.stack.imgur.com/wWIIc.png', 'Stack Exchange Post Editor',
-                             function() {
-                                 
-                alert('Post gets edited here!');
-                                 
-            });
+            // Wait for up to 100 ms to append the button since otherwise
+            // our button might actually end up getting appended before
+            // the standard toolbar buttons.
+            var toolbar = $(this);
+            
+            window.setTimeout(function() {
+                
+                // Begin by appending the editor button to the toolbar
+                AddToolbarButton(toolbar, 'http://i.stack.imgur.com/wWIIc.png', 'Stack Exchange Post Editor',
+                                 function() {
+                    
+                    // Check for the title
+                    var title = toolbar.parents('.post-editor').find('#title');
+                    
+                    if(title.length)
+                        title.attr('value', CorrectTitle(title.attr('value')));
+                    
+                    // Now correct the body
+                    var editor = toolbar.parents('.wmd-container').find('.wmd-input');
+                    editor.val(CorrectBody(editor.val()));
+                    
+                });
+                
+            }, 100);
+            
         });
     });
 });

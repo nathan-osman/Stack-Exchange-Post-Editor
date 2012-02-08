@@ -48,19 +48,45 @@ EmbedFunctionOnPage('LoadDependentScript', function(script_filename, callback) {
     
 });
 
+// This function adds an icon to the toolbar, playing nice with other scripts that
+// may have also injected buttons on the toolbar
+EmbedFunctionOnPage('AddToolbarButton', function(toolbar, icon, tooltip, callback) {
+    
+    // First, retrieve the offset that this new button will assume
+    var left = toolbar.find('li:not(.wmd-help-button):last').css('left');
+    
+    if(left !== null)
+        left = parseInt(left.replace(/\D/g, '')) + 50;
+    else
+        left = 400; // assume the default location of extra buttons
+    
+    // Now create the new button
+    var button = $('<li class="wmd-button" style="left: ' + left + 'px; background-image: url(' + icon + '); background-repeat: no-repeat; background-position: center center;" title="' + tooltip + '"></li>');
+    
+    // ...set its click handler
+    button.click(callback);
+    
+    // ...and append it to the toolbar
+    toolbar.append(button);
+    
+});
+
 // This code will be executed immediately upon insertion into the page DOM
 EmbedFunctionOnPageAndExecute(function() {
     
-    // Load liveQuery so that we can modify the editor even for
-    // inline edits.
-    // Load livequery
+    // Load liveQuery so that we can modify the editor even for inline edits.
     LoadDependentScript('http://files.quickmediasolutions.com/js/jquery.livequery.js', function() {
         
         // Now whenever an editor is created, we manipulate it
         $('.wmd-button-row').livequery(function() {
             
-            // Do something with the editor: '$(this)'
-            
+            // Begin by appending the editor button to the toolbar
+            AddToolbarButton($(this), 'http://i.stack.imgur.com/wWIIc.png', 'Stack Exchange Post Editor',
+                             function() {
+                                 
+                alert('Post gets edited here!');
+                                 
+            });
         });
     });
 });

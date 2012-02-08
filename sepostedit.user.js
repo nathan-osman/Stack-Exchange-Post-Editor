@@ -78,12 +78,13 @@ EmbedFunctionOnPage('CorrectCommonMisspellings', function(original_text) {
     
     var replacements = { 'dont':   'don\'t',
                          'i':      'I',
+                         'i\'?m':  'I\'m',
                          'teh':    'the',
-                         'ubunut': 'ubuntu',
+                         '(?:ubunto|ubunut|ubunutu|ubunu|ubntu|ubutnu|uuntu|unbuntu|ubunt|ubutu)': 'Ubuntu',
     };
     
     for(var wrong_word in replacements)
-        text = text.replace(new RegExp(wrong_word, 'gi'), replacements[wrong_word]);
+        text = text.replace(new RegExp('\\b' + wrong_word + '\\b', 'gi'), replacements[wrong_word]);
     
     return text;
     

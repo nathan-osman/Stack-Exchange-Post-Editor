@@ -90,6 +90,15 @@ EmbedFunctionOnPage('CorrectCommonMisspellings', function(original_text) {
     
 });
 
+// Removes Thank You from the post body
+EmbedFunctionOnPage('RemoveThankYou', function(text) {
+    
+    // You are officially a genius if you can understand what this
+    // RegEx I wrote does:
+    return text.replace(/(?:, |many )?(?:thank|k?thn?x(?:bye)?)(?:s|(?: |-)you)?(?: (?:so|very) much)?(?:\s?(?:,|-)(?:[\w\s]+)| :-?\)| a lot| and regards| for(?: any| the)? (?:help|ideas)| in advance)?/i, '');
+    
+});
+
 // Corrects the title of the question
 EmbedFunctionOnPage('CorrectTitle', function(original_title) {
     
@@ -99,7 +108,7 @@ EmbedFunctionOnPage('CorrectTitle', function(original_title) {
     // Anytime more than two letters are capitalized, switch them to lowercase
     title = title.replace(/([A-Z]{2,})/g, function(i) { return i.toLowerCase() });
     
-    // If there is no punctuation on the end of the 
+    // ...
     
     return title;
     
@@ -110,6 +119,9 @@ EmbedFunctionOnPage('CorrectBody', function(original_body) {
     
     // Correct any misspellings
     var body = CorrectCommonMisspellings(original_body);
+    
+    // Remove any 'thank-you' sentences
+    body = RemoveThankYou(body);
     
     return body;
     
@@ -138,12 +150,20 @@ EmbedFunctionOnPageAndExecute(function() {
                     // Check for the title
                     var title = toolbar.parents('.post-editor').find('#title');
                     
-                    if(title.length)
-                        title.attr('value', CorrectTitle(title.attr('value')));
+                    if(title.length) {
+                        
+                        var new_title = CorrectTitle(title.attr('value'));
+                        title.attr('value', new_title);
+                        $('#question-header .question-hyperlink').text(new_title)
+                        
+                    }
                     
                     // Now correct the body
                     var editor = toolbar.parents('.wmd-container').find('.wmd-input');
                     editor.val(CorrectBody(editor.val()));
+                    
+                    // ...and update the preview
+                    StackExchange.MarkdownEditor.refreshAllPreviews();
                     
                 });
                 

@@ -38,7 +38,7 @@ function EmbedFunctionOnPageAndExecute(function_contents)
 
 // This function executes the provided callback when the dependent
 // script has finished loading.
-EmbedFunctionOnPage('LoadDependentScript', function(script_filename, callback) {
+EmbedFunctionOnPage('SPE_LoadDependentScript', function(script_filename, callback) {
     
     var script    = document.createElement('script');
     script.type   = 'text/javascript';
@@ -50,7 +50,7 @@ EmbedFunctionOnPage('LoadDependentScript', function(script_filename, callback) {
 
 // This function adds an icon to the toolbar, playing nice with other scripts that
 // may have also injected buttons on the toolbar
-EmbedFunctionOnPage('AddToolbarButton', function(toolbar, icon, tooltip, callback) {
+EmbedFunctionOnPage('SPE_AddToolbarButton', function(toolbar, icon, tooltip, callback) {
     
     // First, retrieve the offset that this new button will assume
     var left = toolbar.find('li:not(.wmd-help-button):last').css('left');
@@ -72,7 +72,7 @@ EmbedFunctionOnPage('AddToolbarButton', function(toolbar, icon, tooltip, callbac
 });
 
 // Corrects common misspellings (this includes improperly capitalized words too)
-EmbedFunctionOnPage('CorrectCommonMisspellings', function(original_text) {
+EmbedFunctionOnPage('SPE_CorrectCommonMisspellings', function(original_text) {
     
     var text = original_text;
     
@@ -91,7 +91,7 @@ EmbedFunctionOnPage('CorrectCommonMisspellings', function(original_text) {
 });
 
 // Removes Thank You from the post body
-EmbedFunctionOnPage('RemoveThankYou', function(text) {
+EmbedFunctionOnPage('SPE_RemoveThankYou', function(text) {
     
     // You are officially a genius if you can understand what this
     // RegEx I wrote does:
@@ -100,28 +100,28 @@ EmbedFunctionOnPage('RemoveThankYou', function(text) {
 });
 
 // Corrects the title of the question
-EmbedFunctionOnPage('CorrectTitle', function(original_title) {
+EmbedFunctionOnPage('SPE_CorrectTitle', function(original_title) {
     
     // First correct any misspellings
-    var title = CorrectCommonMisspellings(original_title);
+    var title = SPE_CorrectCommonMisspellings(original_title);
     
     // Anytime more than two letters are capitalized, switch them to lowercase
     title = title.replace(/([A-Z]{2,})/g, function(i) { return i.toLowerCase() });
     
-    // ...
+    // TODO: make sure first word is capitalized and the title ends with punctuation.
     
     return title;
     
 });
 
 // Corrects the body of the post
-EmbedFunctionOnPage('CorrectBody', function(original_body) {
+EmbedFunctionOnPage('SPE_CorrectBody', function(original_body) {
     
     // Correct any misspellings
-    var body = CorrectCommonMisspellings(original_body);
+    var body = SPE_CorrectCommonMisspellings(original_body);
     
     // Remove any 'thank-you' sentences
-    body = RemoveThankYou(body);
+    body = SPE_RemoveThankYou(body);
     
     return body;
     
@@ -130,45 +130,56 @@ EmbedFunctionOnPage('CorrectBody', function(original_body) {
 // This code will be executed immediately upon insertion into the page DOM
 EmbedFunctionOnPageAndExecute(function() {
     
-    // Load liveQuery so that we can modify the editor even for inline edits.
-    LoadDependentScript('http://files.quickmediasolutions.com/js/jquery.livequery.js', function() {
+    // Load jsdiff
+    SPE_LoadDependentScript('http://ejohn.org/files/jsdiff.js', function() {
         
-        // Now whenever an editor is created, we manipulate it
-        $('.wmd-button-row').livequery(function() {
-            
-            // Wait for up to 100 ms to append the button since otherwise
-            // our button might actually end up getting appended before
-            // the standard toolbar buttons.
-            var toolbar = $(this);
-            
-            window.setTimeout(function() {
+        // Load liveQuery so that we can modify the editor even for inline edits.
+        SPE_LoadDependentScript('http://files.quickmediasolutions.com/js/jquery.livequery.js', function() {
+        
+            // Now whenever an editor is created, we manipulate it
+            $('.wmd-button-row').livequery(function() {
                 
-                // Begin by appending the editor button to the toolbar
-                AddToolbarButton(toolbar, 'http://i.stack.imgur.com/wWIIc.png', 'Stack Exchange Post Editor',
-                                 function() {
-                    
-                    // Check for the title
-                    var title = toolbar.parents('.post-editor').find('#title');
-                    
-                    if(title.length) {
-                        
-                        var new_title = CorrectTitle(title.attr('value'));
-                        title.attr('value', new_title);
-                        $('#question-header .question-hyperlink').text(new_title)
-                        
-                    }
-                    
-                    // Now correct the body
-                    var editor = toolbar.parents('.wmd-container').find('.wmd-input');
-                    editor.val(CorrectBody(editor.val()));
-                    
-                    // ...and update the preview
-                    StackExchange.MarkdownEditor.refreshAllPreviews();
-                    
-                });
+                // Wait for up to 100 ms to append the button since otherwise
+                // our button might actually end up getting appended before
+                // the standard toolbar buttons.
+                var toolbar = $(this);
                 
-            }, 100);
-            
+                window.setTimeout(function() {
+                    
+                    // Begin by appending the editor button to the toolbar
+                    SPE_AddToolbarButton(toolbar, 'http://i.stack.imgur.com/wWIIc.png', 'Stack Exchange Post Editor',
+                                         function() {
+                        
+                        // Check for the title
+                        var title = $('#title').val();
+                        if(title.length) {
+                            
+                            var new_title = SPE_CorrectTitle(title);
+                            $('#title').val(new_title);
+                            $('#question-header .question-hyperlink').text(new_title)
+                            
+                        }
+                        
+                        // Now correct the body
+                        var editor = toolbar.parents('.wmd-container').find('.wmd-input');
+                        editor.val(SPE_CorrectBody(editor.val()));
+                        
+                        // ...and update the preview
+                        StackExchange.MarkdownEditor.refreshAllPreviews();
+                        
+                    });
+                    
+                    // Now append the diff button to the toolbar
+                    SPE_AddToolbarButton(toolbar, 'http://i.stack.imgur.com/pHHIq.png', 'Toggle diff of Post Modifications',
+                                         function() {
+                        
+                        //...
+                        
+                    });
+                    
+                }, 100);
+                
+            });
         });
     });
 });

@@ -55,7 +55,7 @@ EmbedFunctionOnPage('SPE_AddToolbarButton', function(toolbar, icon, tooltip, cal
     // First, retrieve the offset that this new button will assume
     var left = toolbar.find('li:not(.wmd-help-button):last').css('left');
     
-    if(left !== null)
+    if(left !== null && left != undefined)
         left = parseInt(left.replace(/\D/g, '')) + 50;
     else
         left = 400; // assume the default location of extra buttons
@@ -127,26 +127,76 @@ EmbedFunctionOnPage('SPE_CorrectBody', function(original_body) {
     
 });
 
+EmbedFunctionOnPage('SPE_CreateDiff', function(preview, textarea) {
+    
+    // Create the DIFF <div>
+    var diff = $('<div class="spe_diff wmd-preview"></div>');
+    
+    // Setup the event handler
+    textarea.keyup(function() {
+        
+        // Grab the original HTML for the post and the current HTML
+        var original = preview.data('original_contents');
+        var current  = preview.html();
+        
+        diff.html(diffString(original, current));
+        
+    });
+    
+    // Create the wrapper <div> that will contain the preview and diff
+    // and append it after the preview element.
+    var container = $('<div></div>');
+    preview.after(container);
+    
+    // Now attach the two items
+    container.append(preview.detach()).append(diff);
+    
+    // Trigger the keyup event to seed the diff <div>
+    textarea.trigger('keyup');
+    
+});
+
 // This code will be executed immediately upon insertion into the page DOM
 EmbedFunctionOnPageAndExecute(function() {
     
+    // Inject the stylesheet we need
+    $('head').append('<style>\
+                      .spe_diff ins {\
+                          background-color: #cfc;\
+                      }\
+                      .spe_diff del {\
+                          background-color: #fcc;\
+                      }\
+                      .spe_diff {\
+                          display: none;\
+                      }\
+                      </script>');
+    
     // Load jsdiff
-    SPE_LoadDependentScript('http://ejohn.org/files/jsdiff.js', function() {
+    SPE_LoadDependentScript('http://files.quickmediasolutions.com/js/jsdiff.min.js', function() {
         
         // Load liveQuery so that we can modify the editor even for inline edits.
         SPE_LoadDependentScript('http://files.quickmediasolutions.com/js/jquery.livequery.js', function() {
         
             // Now whenever an editor is created, we manipulate it
-            $('.wmd-button-row').livequery(function() {
+            $('.post-editor').livequery(function() {
                 
-                // Wait for up to 100 ms to append the button since otherwise
-                // our button might actually end up getting appended before
-                // the standard toolbar buttons.
-                var toolbar = $(this);
+                // Wait for up to 100 ms to append the button since otherwise our button might
+                // actually end up getting appended before the standard toolbar buttons.
+                var editor = $(this);
                 
                 window.setTimeout(function() {
                     
-                    // Begin by appending the editor button to the toolbar
+                    // Grab a copy of the original contents
+                    var preview = editor.find('.wmd-preview');
+                    preview.data('original_contents', preview.html());
+                    
+                    // Set up the diff / preview
+                    var textarea = editor.find('.wmd-input');
+                    SPE_CreateDiff(preview, textarea);
+                    
+                    // Then append the editor button to the toolbar
+                    var toolbar = editor.find('.wmd-button-row');
                     SPE_AddToolbarButton(toolbar, 'http://i.stack.imgur.com/wWIIc.png', 'Stack Exchange Post Editor',
                                          function() {
                         
@@ -161,11 +211,11 @@ EmbedFunctionOnPageAndExecute(function() {
                         }
                         
                         // Now correct the body
-                        var editor = toolbar.parents('.wmd-container').find('.wmd-input');
-                        editor.val(SPE_CorrectBody(editor.val()));
+                        textarea.val(SPE_CorrectBody(textarea.val()));
                         
                         // ...and update the preview
                         StackExchange.MarkdownEditor.refreshAllPreviews();
+                        textarea.trigger('keyup');
                         
                     });
                     
@@ -173,11 +223,13 @@ EmbedFunctionOnPageAndExecute(function() {
                     SPE_AddToolbarButton(toolbar, 'http://i.stack.imgur.com/pHHIq.png', 'Toggle diff of Post Modifications',
                                          function() {
                         
-                        //...
+                        // Make the diff viewer active
+                        preview.toggle();
+                        editor.find('.spe_diff').toggle();
                         
                     });
                     
-                }, 100);
+                }, 200);
                 
             });
         });

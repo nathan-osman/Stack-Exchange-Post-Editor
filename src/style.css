@@ -1,0 +1,12 @@
+.spe_diff ins {
+    background-color: #cfc;
+}
+
+.spe_diff del {
+    background-color: #fcc;
+}
+
+.spe_diff {
+    display: none;
+}
+

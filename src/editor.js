@@ -25,17 +25,7 @@
 EmbedFunctionOnPageAndExecute(function() {
     
     // Inject the stylesheet we need
-    $('head').append('<style>\
-                      .spe_diff ins {\
-                          background-color: #cfc;\
-                      }\
-                      .spe_diff del {\
-                          background-color: #fcc;\
-                      }\
-                      .spe_diff {\
-                          display: none;\
-                      }\
-                      </script>');
+    $('head').append(/* @include style.css quote minify */);
     
     // Load jsdiff
     SPE_LoadDependentScript('http://files.quickmediasolutions.com/js/jsdiff.min.js', function() {

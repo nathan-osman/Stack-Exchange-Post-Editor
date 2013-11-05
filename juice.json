@@ -1,0 +1,5 @@
+{
+    "files": [
+        { "filename": "src/editor.js", "output": "sepostedit.user.js" }
+    ]
+}

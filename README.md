@@ -13,6 +13,14 @@ We're looking at a number of different features, but primarily we want to includ
 - Automatic removal of signature lines ("thanks", etc.)
 - Correction of capitalization (standalone 'i' should be capitalized, etc.)
 
+### How do I build this thing?
+
+You will need [Juice Builder](https://github.com/nathan-osman/Juice-Builder) in order to build the UserScript. Basically this involves running the following command:
+
+    python juice.py
+
+You will then have a file named `sepostedit.user.js` in the current directory.
+
 ### Can I help?
 
 Certainly! Just fork this project and start adding awesome features.
